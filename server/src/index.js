@@ -9,6 +9,7 @@ import authRoutes from './modules/auth/auth.routes.js';
 import transactionRoutes from './modules/transaction/transaction.routes.js';
 import budgetRoutes from './modules/budget/budget.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
+import notificationRoutes from './modules/notification/notification.routes.js';
 import { errorHandler, notFound } from './middleware/error.middleware.js';
 
 // Connect to Database
@@ -45,6 +46,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/transactions', transactionRoutes);
 app.use('/api/v1/budgets', budgetRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Error Handling
 app.use(notFound);

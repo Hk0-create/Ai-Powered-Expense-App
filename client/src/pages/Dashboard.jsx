@@ -135,7 +135,7 @@ const Dashboard = () => {
 
         {/* AI Insight and Recent Activity */}
         <div className="lg:col-span-2 space-y-6">
-          <AIInsightCard insight={aiInsight} onRefresh={refreshInsight} isLoading={isInsightLoading} />
+          <AIInsightCard insight={aiInsight} onRefresh={refreshInsight} isLoading={isInsightLoading} onViewDetail={() => navigate('/analytics')} />
 
           <div className="bg-card rounded-xl border border-border p-6">
             <div className="flex items-center justify-between mb-6">

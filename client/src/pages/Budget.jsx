@@ -4,7 +4,8 @@ import {
   RefreshCcw, 
   AlertCircle,
   TrendingUp,
-  Target
+  Target,
+  Cpu
 } from 'lucide-react';
 import api from '../api/axiosInstance';
 import BudgetGauge from '../components/shared/BudgetGauge';
@@ -114,12 +115,12 @@ const Budget = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
-            <h3 className="font-bold flex items-center gap-2 text-primary">
-              <AlertCircle className="w-5 h-5" />
+          <div className="bg-white border border-border rounded-2xl p-6 space-y-4 hover:border-primary/20 transition-all duration-300">
+            <h3 className="font-bold flex items-center gap-2.5 text-primary">
+              <Cpu className="w-5 h-5" />
               AI Budget Advisor
             </h3>
-            <div className="prose prose-sm italic text-slate-600 leading-relaxed">
+            <div className="prose prose-sm italic text-slate-600 leading-relaxed font-medium">
               {advice || "Generating advice..."}
             </div>
           </div>

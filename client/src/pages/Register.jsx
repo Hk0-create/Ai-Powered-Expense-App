@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, User, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import Logo from '../components/shared/Logo';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -46,7 +47,7 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-xl shadow-slate-200 border border-border">
         <div className="text-center">
           <div className="inline-flex p-3 bg-primary/10 rounded-2xl mb-4">
-            <Sparkles className="w-8 h-8 text-primary" />
+            <Logo className="w-8 h-8" />
           </div>
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Join SpendSense</h2>
           <p className="mt-2 text-sm text-slate-500">The first step towards AI-powered wealth management.</p>

@@ -76,7 +76,7 @@ export const getBudgetVsActual = async (userId, month) => {
 
 export const getAIAdvisor = async (userId, month) => {
   const budget = await Budget.findOne({ user: userId, month });
-  if (budget && budget.aiAdviceCache && (new Date() - budget.adviceCachedAt < 30 * 60 * 1000)) {
+  if (budget && budget.aiAdviceCache && !budget.aiAdviceCache.includes('Your spending is being tracked') && (new Date() - budget.adviceCachedAt < 30 * 60 * 1000)) {
     return budget.aiAdviceCache;
   }
 

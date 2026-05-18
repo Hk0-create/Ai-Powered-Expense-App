@@ -6,11 +6,11 @@ import {
   BarChart3, 
   Wallet, 
   User, 
-  LogOut,
-  Sparkles
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
+import Logo from '../shared/Logo';
 
 const Sidebar = () => {
   const { logout } = useAuth();
@@ -27,7 +27,7 @@ const Sidebar = () => {
     <div className="flex flex-col h-full bg-card border-r border-border w-60">
       <div className="p-6">
         <div className="flex items-center gap-2 text-primary font-bold text-xl">
-          <Sparkles className="w-6 h-6 fill-primary/20" />
+          <Logo className="w-6 h-6" />
           <span>SpendSense AI</span>
         </div>
       </div>
