@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Bell, 
   Search, 
@@ -57,12 +58,77 @@ const getNotificationIcon = (type) => {
 
 const TopBar = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
   
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  
   const notificationRef = useRef(null);
   const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearchModal(prev => !prev);
+      } else if (e.key === 'Escape') {
+        setShowSearchModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const { data } = await api.get('/transactions', {
+          params: { search: searchQuery, limit: 5 }
+        });
+        setSearchResults(data.data.transactions || []);
+        setSelectedIndex(0);
+      } catch (err) {
+        console.error('Search failed:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const handleModalKeyDown = (e) => {
+    const totalItems = searchQuery.trim() ? searchResults.length : 4;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % totalItems);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + totalItems) % totalItems);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchQuery.trim()) {
+        if (searchResults[selectedIndex]) {
+          navigate(`/transactions?search=${encodeURIComponent(searchQuery)}`);
+          setShowSearchModal(false);
+        }
+      } else {
+        const paths = ['/dashboard', '/transactions', '/analytics', '/budget'];
+        navigate(paths[selectedIndex]);
+        setShowSearchModal(false);
+      }
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -131,15 +197,14 @@ const TopBar = ({ onMenuClick }) => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Search Bar */}
-        <div className="hidden sm:flex items-center bg-slate-100 px-3 py-1.5 rounded-full border border-transparent focus-within:border-primary/30 transition-all">
-          <Search className="w-4 h-4 text-muted-foreground mr-2" />
-          <input 
-            type="text" 
-            placeholder="Search transactions..." 
-            className="bg-transparent border-none outline-none text-sm w-40 md:w-60"
-          />
-          <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-border text-muted-foreground ml-2">⌘K</span>
+        {/* Search Bar Button */}
+        <div 
+          onClick={() => setShowSearchModal(true)}
+          className="hidden sm:flex items-center bg-slate-100 px-4 py-2 rounded-full border border-transparent hover:border-primary/20 cursor-pointer transition-all w-44 md:w-64 group shadow-sm hover:shadow"
+        >
+          <Search className="w-4 h-4 text-muted-foreground mr-2 group-hover:text-primary transition-colors" />
+          <span className="text-sm text-muted-foreground flex-1 select-none">Search transactions...</span>
+          <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-border text-muted-foreground ml-2 shadow-xs">⌘K</span>
         </div>
 
         {/* Notifications Popover */}
@@ -280,6 +345,141 @@ const TopBar = ({ onMenuClick }) => {
           )}
         </div>
       </div>
+
+      {/* SpendSense AI Command Palette / Spotlight Search */}
+      {showSearchModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 animate-in fade-in duration-200"
+          onKeyDown={handleModalKeyDown}
+        >
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
+            onClick={() => setShowSearchModal(false)}
+          />
+          
+          {/* Modal Container */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150 flex flex-col">
+            {/* Search Input Box */}
+            <div className="flex items-center px-4 py-3.5 border-b border-slate-100 shrink-0">
+              <Search className="w-5 h-5 text-slate-400 mr-3 shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search transactions by merchant or description..."
+                className="bg-transparent border-none outline-none text-sm text-slate-800 placeholder-slate-400 w-full shrink-0"
+              />
+              <button 
+                onClick={() => setShowSearchModal(false)}
+                className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold border border-slate-200 shrink-0"
+              >
+                ESC
+              </button>
+            </div>
+
+            {/* Content Area */}
+            <div className="max-h-[350px] overflow-y-auto p-2">
+              {isSearching ? (
+                <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-xs">Searching database...</p>
+                </div>
+              ) : searchQuery.trim() ? (
+                searchResults.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400">
+                    <p className="text-sm">No transactions found for "{searchQuery}"</p>
+                    <p className="text-xs mt-1">Try searching another term, e.g. "Pizza" or "Imtiaz"</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Matching Transactions
+                    </div>
+                    {searchResults.map((tx, idx) => (
+                      <div
+                        key={tx._id}
+                        onClick={() => {
+                          navigate(`/transactions?search=${encodeURIComponent(searchQuery)}`);
+                          setShowSearchModal(false);
+                        }}
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                        className={cn(
+                          "flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all",
+                          idx === selectedIndex ? "bg-indigo-50/70 text-primary font-medium" : "hover:bg-slate-50 text-slate-700"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-100 border border-slate-200 text-slate-600 shrink-0">
+                            {tx.category}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-bold text-xs truncate">{tx.merchant || 'General'}</p>
+                            {tx.description && <p className="text-[10px] text-slate-400 truncate max-w-[240px]">{tx.description}</p>}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 ml-3">
+                          <p className={cn("font-mono font-bold text-xs", tx.type === 'income' ? "text-emerald-600" : "text-slate-900")}>
+                            {tx.type === 'income' ? '+' : '-'}{tx.amount.toLocaleString()} PKR
+                          </p>
+                          <p className="text-[9px] text-slate-400">
+                            {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <div className="space-y-1">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Quick Actions & Navigation
+                  </div>
+                  {[
+                    { label: 'Go to Dashboard', path: '/dashboard', desc: 'View financial summary, alerts & metrics' },
+                    { label: 'View Transactions', path: '/transactions', desc: 'Browse, edit, and delete transactions' },
+                    { label: 'View Analytics', path: '/analytics', desc: 'Visualize spending trends and breakdowns' },
+                    { label: 'Budget Manager', path: '/budget', desc: 'Set limit & analyze budget vs actual costs' }
+                  ].map((action, idx) => (
+                    <div
+                      key={action.path}
+                      onClick={() => {
+                        navigate(action.path);
+                        setShowSearchModal(false);
+                      }}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all",
+                        idx === selectedIndex ? "bg-indigo-50/70 text-primary font-medium" : "hover:bg-slate-50 text-slate-700"
+                      )}
+                    >
+                      <div>
+                        <p className="font-bold text-xs">{action.label}</p>
+                        <p className="text-[10px] text-slate-400">{action.desc}</p>
+                      </div>
+                      <span className={cn("text-xs font-bold transition-all", idx === selectedIndex ? "text-primary translate-x-1" : "text-slate-300")}>
+                        Go →
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Command Palette Footer */}
+            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium shrink-0">
+              <div className="flex gap-4">
+                <span><kbd className="bg-white border px-1 rounded shadow-sm font-sans font-bold">↑↓</kbd> to navigate</span>
+                <span><kbd className="bg-white border px-1 rounded shadow-sm font-sans font-bold">Enter</kbd> to select</span>
+              </div>
+              <div>
+                <span>Press <kbd className="bg-white border px-1 rounded shadow-sm font-sans font-bold">Esc</kbd> to close</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

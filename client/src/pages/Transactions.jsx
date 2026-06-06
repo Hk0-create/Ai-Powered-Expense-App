@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Filter, Download, Plus, Search, Calendar, AlertCircle, Trash2, Edit2, Check, X } from 'lucide-react';
 import api from '../api/axiosInstance';
 import AddTransactionModal from '../components/shared/AddTransactionModal';
@@ -9,13 +10,20 @@ const CATEGORIES = ['All', 'Food & Dining', 'Transport', 'Shopping', 'Entertainm
   'Health & Fitness', 'Utilities', 'Housing', 'Education', 'Travel', 'Personal Care', 'Investments', 'Other'];
 
 const Transactions = () => {
+  const [searchParams] = useSearchParams();
+  const searchParam = searchParams.get('search') || '';
+
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
-  const [filters, setFilters] = useState({ page: 1, limit: 20, type: '', category: '', search: '' });
+  const [filters, setFilters] = useState({ page: 1, limit: 20, type: '', category: '', search: searchParam });
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+
+  useEffect(() => {
+    setFilters(p => ({ ...p, search: searchParam, page: 1 }));
+  }, [searchParam]);
 
   const fetchTransactions = useCallback(async () => {
     try {

@@ -4,10 +4,13 @@ import * as aiService from './ai.service.js';
 import Transaction from '../../models/Transaction.model.js';
 
 export const getLatestInsight = asyncHandler(async (req, res) => {
-  // Get last 7 days vs prior 7 days data
+  // Get last 7 days vs prior 7 days data with robust date boundaries
   const now = new Date();
-  const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-  const twoWeeksAgo = new Date(now - 14 * 24 * 60 * 60 * 1000);
+  now.setHours(23, 59, 59, 999); // End of today
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  weekAgo.setHours(0, 0, 0, 0); // Start of 7 days ago
+  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  twoWeeksAgo.setHours(0, 0, 0, 0); // Start of 14 days ago
 
   const [thisWeek, lastWeek] = await Promise.all([
     Transaction.aggregate([

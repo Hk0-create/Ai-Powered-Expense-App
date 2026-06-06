@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Receipt, 
@@ -26,10 +26,13 @@ const Sidebar = () => {
   return (
     <div className="flex flex-col h-full bg-card border-r border-border w-60">
       <div className="p-6">
-        <div className="flex items-center gap-2 text-primary font-bold text-xl">
+        <Link 
+          to="/dashboard" 
+          className="flex items-center gap-2 text-primary font-bold text-xl hover:opacity-80 transition-opacity"
+        >
           <Logo className="w-6 h-6" />
           <span>SpendSense AI</span>
-        </div>
+        </Link>
       </div>
 
       <nav className="flex-1 px-4 space-y-1">

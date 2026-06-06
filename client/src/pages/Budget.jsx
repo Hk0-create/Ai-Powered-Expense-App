@@ -24,10 +24,12 @@ const Budget = () => {
   const [advice, setAdvice] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      setHasError(false);
       const [budgetRes, vsActualRes, advisorRes] = await Promise.all([
         api.get('/budgets'),
         api.get('/budgets/vs-actual'),
@@ -39,6 +41,7 @@ const Budget = () => {
       setAdvice(advisorRes.data.data);
     } catch (error) {
       console.error('Error fetching budget data:', error);
+      setHasError(true);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +73,27 @@ const Budget = () => {
     setBudgetData({ ...budgetData, categories: newCats });
   };
 
-  if (isLoading) return <div className="p-10 text-center">Loading Budget...</div>;
+  if (isLoading) return <div className="p-10 text-center text-sm font-semibold">Loading Budget...</div>;
+
+  if (hasError || !budgetData || !vsActual) {
+    return (
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white border border-red-100 rounded-2xl shadow-lg text-center space-y-5">
+        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Failed to Load Budget Data</h2>
+        <p className="text-sm text-slate-500">
+          There was an issue communicating with the server. Please verify your connection or check the server status.
+        </p>
+        <button 
+          onClick={fetchData}
+          className="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-xl font-medium hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-200"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -130,20 +153,34 @@ const Budget = () => {
         <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-8 shadow-sm">
           <h3 className="text-lg font-bold mb-6">Category Spending Limits</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-            {vsActual?.categories.map((item) => (
-              <div key={item.category} className="space-y-3">
-                <BudgetGauge {...item} />
-                <div className="flex items-center bg-slate-50 rounded-lg px-3 py-1.5 border border-border focus-within:border-primary/30 transition-all">
-                  <span className="text-xs font-bold text-muted-foreground mr-2">CAP:</span>
-                  <input 
-                    type="number"
-                    value={budgetData.categories[item.category] || 0}
-                    onChange={(e) => updateCategoryCap(item.category, e.target.value)}
-                    className="bg-transparent border-none outline-none text-sm font-bold w-full"
-                  />
+            {vsActual?.categories.map((item) => {
+              const currentCap = budgetData?.categories?.[item.category] ?? 0;
+              const currentSpent = item.spent;
+              const currentRemaining = Math.max(0, currentCap - currentSpent);
+              const currentPercent = currentCap > 0 ? Math.min(100, Math.round((currentSpent / currentCap) * 100)) : 0;
+              
+              const dynamicItem = {
+                ...item,
+                cap: currentCap,
+                remaining: currentRemaining,
+                percent: currentPercent
+              };
+
+              return (
+                <div key={item.category} className="space-y-3">
+                  <BudgetGauge {...dynamicItem} globalCap={budgetData?.globalCap} />
+                  <div className="flex items-center bg-slate-50 rounded-lg px-3 py-1.5 border border-border focus-within:border-primary/30 transition-all">
+                    <span className="text-xs font-bold text-muted-foreground mr-2">CAP:</span>
+                    <input 
+                      type="number"
+                      value={budgetData.categories[item.category] || 0}
+                      onChange={(e) => updateCategoryCap(item.category, e.target.value)}
+                      className="bg-transparent border-none outline-none text-sm font-bold w-full"
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

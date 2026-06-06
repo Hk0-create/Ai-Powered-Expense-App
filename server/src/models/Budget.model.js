@@ -6,7 +6,6 @@ const budgetSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true, // One budget document per user (updated/upserted monthly)
     },
     month: {
       type: String, // "YYYY-MM"

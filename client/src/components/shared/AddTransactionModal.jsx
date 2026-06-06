@@ -92,7 +92,7 @@ const AddTransactionModal = ({ onClose, onSuccess }) => {
                 value={nlText}
                 onChange={(e) => setNlText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleNLParse()}
-                placeholder='e.g. "Pizza at Dominos for 850 yesterday"'
+                placeholder='e.g. "Pizza at Broadway Pizza for 850 yesterday"'
                 className="flex-1 bg-white border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
               />
               <button
@@ -150,7 +150,7 @@ const AddTransactionModal = ({ onClose, onSuccess }) => {
                   name="merchant"
                   value={form.merchant}
                   onChange={handleChange}
-                  placeholder="e.g. Starbucks"
+                  placeholder="e.g. Imtiaz Shopping Mall"
                   className="w-full mt-1.5 px-3 py-2.5 bg-slate-50 border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -175,7 +175,8 @@ const AddTransactionModal = ({ onClose, onSuccess }) => {
                 onChange={handleChange}
                 className="w-full mt-1.5 px-3 py-2.5 bg-slate-50 border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
               >
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map(
+                  c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 

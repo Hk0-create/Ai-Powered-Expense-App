@@ -1,12 +1,17 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
-const BudgetGauge = ({ category, cap, spent, percent }) => {
+const BudgetGauge = ({ category, cap, spent, percent, globalCap }) => {
   const isOver = spent > cap && cap > 0;
   
+  // Calculate dynamic display percentage relative to global limit if no category limit is set
+  const displayPercent = cap > 0 
+    ? percent 
+    : (globalCap > 0 ? Math.min(100, Math.round((spent / globalCap) * 100)) : 0);
+
   // Color logic
   const getBarColor = () => {
-    if (cap === 0) return "bg-slate-200";
+    if (cap === 0) return spent > 0 ? "bg-primary/50" : "bg-slate-200";
     if (percent >= 100) return "bg-rose-500";
     if (percent >= 75) return "bg-amber-500";
     return "bg-emerald-500";
@@ -26,7 +31,7 @@ const BudgetGauge = ({ category, cap, spent, percent }) => {
             "text-xs font-bold",
             isOver ? "text-rose-600" : "text-slate-600"
           )}>
-            {percent}%
+            {cap > 0 ? `${percent}%` : (spent > 0 && globalCap > 0 ? `${displayPercent}% of Global` : '0%')}
           </span>
         </div>
       </div>
@@ -34,7 +39,7 @@ const BudgetGauge = ({ category, cap, spent, percent }) => {
       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
         <div 
           className={cn("h-full transition-all duration-1000", getBarColor())}
-          style={{ width: `${Math.min(100, percent)}%` }}
+          style={{ width: `${Math.min(100, cap > 0 ? percent : displayPercent)}%` }}
         />
       </div>
       

@@ -1,9 +1,25 @@
 import Transaction from '../../models/Transaction.model.js';
+import Budget from '../../models/Budget.model.js';
 import { ApiError } from '../../utils/ApiError.js';
 import * as aiService from '../ai/ai.service.js';
 import * as notificationService from '../notification/notification.service.js';
 
+const clearBudgetAICache = async (userId, dateStr) => {
+  try {
+    const month = new Date(dateStr || new Date()).toISOString().slice(0, 7);
+    await Budget.findOneAndUpdate(
+      { user: userId, month },
+      { $unset: { aiAdviceCache: 1, adviceCachedAt: 1 } }
+    );
+  } catch (err) {
+    console.error('Error clearing budget AI cache:', err);
+  }
+};
+
 export const createTransaction = async (userId, data) => {
+  // Clear stale budget advice cache for real-time advisor updates
+  await clearBudgetAICache(userId, data.date);
+
   // 1. AI Auto-tagging (if category not provided or "Other")
   let aiCategory = null;
   if (!data.category || data.category === 'Other') {
@@ -129,6 +145,7 @@ export const updateTransaction = async (userId, id, data) => {
     { new: true, runValidators: true }
   );
   if (!transaction) throw new ApiError(404, 'Transaction not found');
+  await clearBudgetAICache(userId, transaction.date);
   return transaction;
 };
 
@@ -139,6 +156,7 @@ export const deleteTransaction = async (userId, id) => {
     { new: true }
   );
   if (!transaction) throw new ApiError(404, 'Transaction not found');
+  await clearBudgetAICache(userId, transaction.date);
   return transaction;
 };
 
@@ -147,6 +165,7 @@ export const bulkDeleteTransactions = async (userId, ids) => {
     { _id: { $in: ids }, user: userId, deleted: false },
     { $set: { deleted: true, deletedAt: new Date() } }
   );
+  await clearBudgetAICache(userId, new Date());
   return result;
 };
 
